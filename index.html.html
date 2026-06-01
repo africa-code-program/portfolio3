@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kennedy Maingi — Penetration Tester & Bug Bounty Hunter</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #040a0f;
+    --bg2: #070f17;
+    --bg3: #0c1a24;
+    --surface: #0e2030;
+    --surface2: #122840;
+    --border: rgba(0,255,170,0.12);
+    --accent: #00ffaa;
+    --accent2: #00cfff;
+    --accent3: #ff4e6a;
+    --text: #e8f4f0;
+    --text2: #7abfa8;
+    --text3: #4a8a72;
+    --glow: 0 0 20px rgba(0,255,170,0.15);
+    --glow2: 0 0 30px rgba(0,207,255,0.12);
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+    --r: 8px;
+    --rl: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── SCANLINE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,170,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,170,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(4,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 max(2rem, calc((100% - 1200px)/2));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .nav-logo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--text2); }
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text2);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0; right: 100%;
+    height: 1px;
+    background: var(--accent);
+    transition: right 0.25s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a:hover::after { right: 0; }
+  .nav-cta {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    border: 1px solid rgba(0,255,170,0.4);
+    padding: 6px 16px;
+    border-radius: var(--r);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .nav-cta:hover { background: rgba(0,255,170,0.1); box-shadow: var(--glow); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+  .hamburger span { width: 22px; height: 1.5px; background: var(--text2); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 120px max(2rem, calc((100% - 1200px)/2)) 80px;
+    position: relative;
+    z-index: 1;
+    gap: 4rem;
+  }
+  .hero-left { flex: 1; max-width: 640px; }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    border: 1px solid rgba(0,255,170,0.25);
+    padding: 5px 12px;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+  }
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  .hero-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+  .hero-name .highlight {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--accent);
+  }
+  .hero-title {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--accent2);
+    letter-spacing: 0.12em;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+  .hero-title .cursor {
+    display: inline-block;
+    width: 8px; height: 1em;
+    background: var(--accent2);
+    margin-left: 4px;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+  .hero-desc {
+    font-size: 1.0rem;
+    color: var(--text2);
+    max-width: 520px;
+    margin-bottom: 2.5rem;
+    line-height: 1.8;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: var(--accent);
+    display: block;
+    line-height: 1;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .hero-btns {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    background: var(--accent);
+    color: #040a0f;
+    border: none;
+    border-radius: var(--r);
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,255,170,0.3); }
+  .btn-ghost {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--r);
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .hero-right {
+    flex-shrink: 0;
+    position: relative;
+    width: 340px;
+  }
+  .hero-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--rl);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 20px; right: 20px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .avatar-wrap {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2rem;
+    color: #040a0f;
+    margin: 0 auto 1.5rem;
+    position: relative;
+  }
+  .avatar-wrap::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,255,170,0.3);
+    animation: spin 8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .card-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .card-role {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    text-align: center;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .card-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .meta-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .meta-val {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--accent2);
+    display: block;
+  }
+  .meta-key {
+    font-size: 0.68rem;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .tag-green { color: var(--accent); border-color: rgba(0,255,170,0.25); background: rgba(0,255,170,0.06); }
+  .tag-blue { color: var(--accent2); border-color: rgba(0,207,255,0.25); background: rgba(0,207,255,0.06); }
+  .tag-red { color: var(--accent3); border-color: rgba(255,78,106,0.25); background: rgba(255,78,106,0.06); }
+
+  /* ── SECTION COMMON ── */
+  section {
+    padding: 100px max(2rem, calc((100% - 1200px)/2));
+    position: relative;
+    z-index: 1;
+  }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .section-label::before { content: '// '; opacity: 0.5; }
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .section-sub {
+    font-size: 1rem;
+    color: var(--text2);
+    max-width: 560px;
+    margin-bottom: 3.5rem;
+  }
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0;
+  }
+
+  /* ── ABOUT ── */
+  #about { background: var(--bg2); }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  .about-text p { color: var(--text2); margin-bottom: 1rem; }
+  .about-text p strong { color: var(--accent); font-weight: 500; }
+  .skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .skill-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .skill-card:hover { border-color: rgba(0,255,170,0.4); transform: translateY(-2px); }
+  .skill-icon {
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .skill-name {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text);
+    display: block;
+    letter-spacing: 0.05em;
+  }
+  .skill-bar-wrap {
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .skill-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+  }
+
+  /* ── SERVICES ── */
+  #services { background: var(--bg); }
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .service-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--rl);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .service-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+  .service-card:hover { border-color: rgba(0,255,170,0.3); transform: translateY(-4px); }
+  .service-card:hover::after { transform: scaleX(1); }
+  .service-num {
+    font-family: var(--font-mono);
+    font-size: 2.5rem;
+    font-weight: 400;
+    color: rgba(0,255,170,0.08);
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .service-icon {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .service-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.0rem;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+  .service-desc { font-size: 0.88rem; color: var(--text2); line-height: 1.7; }
+
+  /* ── BLOG ── */
+  #blog { background: var(--bg2); }
+  .blog-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 3rem;
+  }
+  .blog-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .blog-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--rl);
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+    text-decoration: none;
+    display: block;
+  }
+  .blog-card:hover { transform: translateY(-4px); border-color: rgba(0,207,255,0.3); }
+  .blog-img {
+    height: 200px;
+    background: var(--bg3);
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .blog-card.featured .blog-img { height: 260px; }
+  .blog-img-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 30% 50%, rgba(0,255,170,0.08) 0%, transparent 60%),
+      radial-gradient(circle at 70% 30%, rgba(0,207,255,0.06) 0%, transparent 50%);
+  }
+  .blog-img-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    z-index: 1;
+  }
+  .blog-content { padding: 1.5rem; }
+  .blog-meta {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 0.75rem;
+  }
+  .blog-cat {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(0,255,170,0.08);
+    border: 1px solid rgba(0,255,170,0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .blog-date {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text3);
+  }
+  .blog-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.0rem;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+  }
+  .blog-card.featured .blog-title { font-size: 1.25rem; }
+  .blog-excerpt { font-size: 0.84rem; color: var(--text2); line-height: 1.6; }
+  .read-more {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    margin-top: 1rem;
+    display: inline-block;
+  }
+  .read-more::after { content: ' →'; }
+
+  /* ── PROJECTS ── */
+  #projects { background: var(--bg); }
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--rl);
+    padding: 2rem;
+    transition: border-color 0.3s, transform 0.3s;
+    position: relative;
+  }
+  .project-card:hover { border-color: rgba(0,207,255,0.3); transform: translateY(-4px); }
+  .project-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .project-icon {
+    width: 48px; height: 48px;
+    border-radius: var(--r);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+  }
+  .project-links { display: flex; gap: 8px; }
+  .icon-link {
+    width: 32px; height: 32px;
+    border-radius: var(--r);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    text-decoration: none;
+    color: var(--text2);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .icon-link:hover { color: var(--accent); border-color: rgba(0,255,170,0.3); }
+  .project-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .project-desc { font-size: 0.87rem; color: var(--text2); line-height: 1.6; margin-bottom: 1.2rem; }
+  .project-techs { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* ── CERTS & EDUCATION ── */
+  #certs { background: var(--bg2); }
+  .certs-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px; top: 8px; bottom: 8px; width: 1px;
+    background: linear-gradient(180deg, var(--accent), transparent);
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 2.5rem;
+  }
+  .tl-dot {
+    position: absolute;
+    left: -2rem; top: 6px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 8px rgba(0,255,170,0.5);
+  }
+  .tl-year {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .tl-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .tl-sub { font-size: 0.82rem; color: var(--text2); margin-bottom: 4px; }
+  .tl-desc { font-size: 0.8rem; color: var(--text3); line-height: 1.5; }
+
+  .certs-list { display: flex; flex-direction: column; gap: 12px; }
+  .cert-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: border-color 0.2s;
+  }
+  .cert-item:hover { border-color: rgba(0,255,170,0.3); }
+  .cert-badge {
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: var(--r);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+  .cert-body { flex: 1; }
+  .cert-name {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text);
+    font-weight: 400;
+  }
+  .cert-org { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+  .cert-status {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+  }
+  .cert-earned { color: var(--accent); background: rgba(0,255,170,0.08); border: 1px solid rgba(0,255,170,0.2); }
+  .cert-pursuit { color: var(--accent2); background: rgba(0,207,255,0.08); border: 1px solid rgba(0,207,255,0.2); }
+
+  /* ── UPLOAD / MEDIA ── */
+  #media { background: var(--bg); }
+  .media-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+  .upload-zone {
+    border: 2px dashed rgba(0,255,170,0.25);
+    border-radius: var(--rl);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, background 0.3s;
+    background: rgba(0,255,170,0.02);
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(0,255,170,0.06);
+  }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .upload-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .upload-sub { font-size: 0.84rem; color: var(--text2); margin-bottom: 1.5rem; }
+  .upload-types {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  #file-input { display: none; }
+  .files-list { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
+  .file-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity:1; transform: none; } }
+  .file-icon { font-size: 1.2rem; }
+  .file-name { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-size { font-size: 0.72rem; color: var(--text3); }
+  .file-del {
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    background: rgba(255,78,106,0.1);
+    border: 1px solid rgba(255,78,106,0.2);
+    color: var(--accent3);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    transition: background 0.2s;
+  }
+  .file-del:hover { background: rgba(255,78,106,0.2); }
+
+  .media-tools { display: flex; flex-direction: column; gap: 16px; }
+  .media-tool {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 1.25rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    text-decoration: none;
+  }
+  .media-tool:hover { border-color: rgba(0,207,255,0.3); transform: translateX(4px); }
+  .mt-icon {
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: var(--r);
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    border: 1px solid var(--border);
+  }
+  .mt-body { flex: 1; }
+  .mt-title { font-family: var(--font-display); font-weight: 600; font-size: 0.92rem; color: var(--text); }
+  .mt-sub { font-size: 0.78rem; color: var(--text2); margin-top: 2px; }
+  .mt-arrow { color: var(--text3); font-size: 0.9rem; }
+
+  /* ── NEWSLETTER ── */
+  #newsletter {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .newsletter-inner {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 4rem;
+    align-items: center;
+  }
+  .nl-benefits { display: flex; flex-direction: column; gap: 12px; margin-top: 1.5rem; }
+  .nl-benefit {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 0.88rem; color: var(--text2);
+  }
+  .nl-benefit-icon { font-size: 1rem; margin-top: 2px; flex-shrink: 0; }
+  .nl-form { display: flex; flex-direction: column; gap: 16px; }
+  .nl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .form-input {
+    background: var(--bg3);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--r);
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: rgba(0,255,170,0.4); }
+  .form-input::placeholder { color: var(--text3); }
+  .nl-cats {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .nl-cat {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .nl-cat.active, .nl-cat:hover {
+    background: rgba(0,255,170,0.1);
+    border-color: rgba(0,255,170,0.35);
+    color: var(--accent);
+  }
+  .nl-submit {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 13px;
+    background: var(--accent);
+    color: #040a0f;
+    border: none;
+    border-radius: var(--r);
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    width: 100%;
+  }
+  .nl-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+  .nl-note { font-size: 0.75rem; color: var(--text3); text-align: center; }
+
+  /* ── CONTACT ── */
+  #contact { background: var(--bg2); }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 4rem;
+  }
+  .contact-info { display: flex; flex-direction: column; gap: 24px; }
+  .contact-item {
+    display: flex; align-items: flex-start; gap: 16px;
+  }
+  .ci-icon {
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: var(--r);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .ci-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+  .ci-val { font-size: 0.92rem; color: var(--text); margin-top: 3px; }
+  .social-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .social-btn {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    padding: 8px 16px;
+    border-radius: var(--r);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text2);
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .social-btn:hover { color: var(--accent); border-color: rgba(0,255,170,0.3); }
+  .contact-form { display: flex; flex-direction: column; gap: 16px; }
+  .cf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  textarea.form-input { resize: vertical; min-height: 140px; }
+  .cf-submit {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 13px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid rgba(0,255,170,0.4);
+    border-radius: var(--r);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+  .cf-submit:hover { background: rgba(0,255,170,0.1); box-shadow: var(--glow); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 2rem max(2rem, calc((100% - 1200px)/2));
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 1;
+  }
+  .footer-left {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+  }
+  .footer-left strong { color: var(--accent); }
+  .footer-right {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text3);
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    background: var(--surface);
+    border: 1px solid rgba(0,255,170,0.3);
+    border-radius: var(--r);
+    padding: 12px 20px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    z-index: 9999;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+  #toast.show { transform: none; opacity: 1; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    #hero { flex-direction: column; }
+    .hero-right { width: 100%; max-width: 400px; }
+    .blog-grid { grid-template-columns: 1fr 1fr; }
+    .blog-card.featured { grid-column: span 2; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    nav { padding: 0 1.5rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    .about-grid, .certs-layout, .newsletter-inner, .contact-grid, .media-layout { grid-template-columns: 1fr; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .services-grid { grid-template-columns: 1fr; }
+    .blog-grid { grid-template-columns: 1fr; }
+    .blog-card.featured { grid-column: span 1; }
+    .nl-row, .cf-row { grid-template-columns: 1fr; }
+    .hero-stats { flex-wrap: wrap; }
+    footer { flex-direction: column; gap: 8px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">KM<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#blog">Blog</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#certs">Certs</a></li>
+    <li><a href="#media">Media</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#newsletter" class="nav-cta">Newsletter</a>
+  <div class="hamburger" onclick="document.querySelector('.nav-links').style.display = document.querySelector('.nav-links').style.display === 'flex' ? 'none' : 'flex'">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-badge">Available for engagements</div>
+    <h1 class="hero-name">Kennedy<br><span class="highlight">Maingi</span></h1>
+    <p class="hero-title"><span id="typed-role">Penetration Tester</span><span class="cursor"></span></p>
+    <p class="hero-desc">
+      Certified ethical hacker and bug bounty hunter specializing in web application security, network penetration testing, and vulnerability research. Turning attack surfaces into hardened systems.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num" id="age-display">23</span>
+        <span class="stat-label">Years old</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">50+</span>
+        <span class="stat-label">Bugs found</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">$12K+</span>
+        <span class="stat-label">Bounties</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">3+</span>
+        <span class="stat-label">Years exp.</span>
+      </div>
+    </div>
+    <div class="hero-btns">
+      <a href="#projects" class="btn-primary">View My Work</a>
+      <a href="#contact" class="btn-ghost">Hire Me</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-card">
+      <div class="avatar-wrap">KM</div>
+      <div class="card-name">Kennedy Maingi</div>
+      <div class="card-role">// Ethical Hacker</div>
+      <div class="card-meta">
+        <div class="meta-item">
+          <span class="meta-val">Nairobi, KE</span>
+          <div class="meta-key">Location</div>
+        </div>
+        <div class="meta-item">
+          <span class="meta-val" id="card-age">24 yrs</span>
+          <div class="meta-key">Age</div>
+        </div>
+        <div class="meta-item">
+          <span class="meta-val">Dec 12</span>
+          <div class="meta-key">Birthday</div>
+        </div>
+        <div class="meta-item">
+          <span class="meta-val">Open</span>
+          <div class="meta-key">Status</div>
+        </div>
+      </div>
+      <div class="card-tags">
+        <span class="tag tag-green">Web AppSec</span>
+        <span class="tag tag-blue">Network Pen Test</span>
+        <span class="tag tag-red">Red Team</span>
+        <span class="tag tag-green">Bug Bounty</span>
+        <span class="tag tag-blue">OSINT</span>
+        <span class="tag tag-red">CTF Player</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-label">About me</div>
+  <h2 class="section-title">Breaking Things to<br>Build Better Ones</h2>
+  <div class="about-grid">
+    <div class="about-text">
+      <p>
+        I'm <strong>Kennedy Maingi</strong>, a passionate penetration tester and bug bounty hunter based in Nairobi, Kenya. Born on December 12, 2002, I've been obsessed with cybersecurity from a young age — understanding how systems fail is the only way to truly protect them.
+      </p>
+      <p>
+        My work spans <strong>web application security</strong>, network penetration testing, API security, mobile security assessments, and vulnerability research on major bug bounty platforms like HackerOne and Bugcrowd.
+      </p>
+      <p>
+        I believe in responsible disclosure, community education, and pushing the boundaries of what's possible through creativity and technical depth. When I'm not hunting bugs, I'm writing about my findings, contributing to CTF challenges, and mentoring the next generation of African hackers.
+      </p>
+      <p>
+        Platforms I've found vulnerabilities on include major tech companies, fintech firms, and government portals across Africa and beyond.
+      </p>
+    </div>
+    <div class="skills-grid">
+      <div class="skill-card">
+        <span class="skill-icon">🕸️</span>
+        <span class="skill-name">Web AppSec</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:92%"></div></div>
+      </div>
+      <div class="skill-card">
+        <span class="skill-icon">🌐</span>
+        <span class="skill-name">Network PenTest</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:85%"></div></div>
+      </div>
+      <div class="skill-card">
+        <span class="skill-icon">🔴</span>
+        <span class="skill-name">Red Teaming</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:78%"></div></div>
+      </div>
+      <div class="skill-card">
+        <span class="skill-icon">📱</span>
+        <span class="skill-name">Mobile Security</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:72%"></div></div>
+      </div>
+      <div class="skill-card">
+        <span class="skill-icon">🔍</span>
+        <span class="skill-name">OSINT</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:88%"></div></div>
+      </div>
+      <div class="skill-card">
+        <span class="skill-icon">⚙️</span>
+        <span class="skill-name">Exploit Dev</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:65%"></div></div>
+      </div>
+      <div class="skill-card">
+        <span class="skill-icon">🐍</span>
+        <span class="skill-name">Python / Scripting</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:80%"></div></div>
+      </div>
+      <div class="skill-card">
+        <span class="skill-icon">🏴</span>
+        <span class="skill-name">CTF Challenges</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:87%"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-label">What I do</div>
+  <h2 class="section-title">Security Services</h2>
+  <p class="section-sub">Professional offensive security engagements for organizations that take their attack surface seriously.</p>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-num">01</div>
+      <span class="service-icon">🕸️</span>
+      <div class="service-title">Web Application Penetration Testing</div>
+      <p class="service-desc">Full-scope web app assessments covering OWASP Top 10, business logic flaws, API security, authentication bypasses, and custom exploit chains.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-num">02</div>
+      <span class="service-icon">🌐</span>
+      <div class="service-title">Network & Infrastructure Testing</div>
+      <p class="service-desc">Internal/external network assessments, Active Directory attacks, lateral movement simulation, and firewall bypass testing.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-num">03</div>
+      <span class="service-icon">🔴</span>
+      <div class="service-title">Red Team Operations</div>
+      <p class="service-desc">Realistic adversary simulations testing your organization's people, processes, and technology — phishing, physical access, and full kill-chain attacks.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-num">04</div>
+      <span class="service-icon">📱</span>
+      <div class="service-title">Mobile App Security</div>
+      <p class="service-desc">Android & iOS security reviews, reverse engineering, traffic interception, insecure data storage, and bypass of certificate pinning.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-num">05</div>
+      <span class="service-icon">🔍</span>
+      <div class="service-title">Vulnerability Research & Disclosure</div>
+      <p class="service-desc">Structured vulnerability research programs, CVE writeups, and responsible coordinated disclosure with affected vendors.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-num">06</div>
+      <span class="service-icon">🎓</span>
+      <div class="service-title">Security Training & Consulting</div>
+      <p class="service-desc">Developer security training, secure code review, threat modelling workshops, and bespoke security consulting for startups and enterprises.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BLOG -->
+<section id="blog">
+  <div class="blog-header">
+    <div>
+      <div class="section-label">Writing</div>
+      <h2 class="section-title">Security Blog</h2>
+    </div>
+    <a href="#" class="btn-ghost" style="white-space:nowrap">All Posts →</a>
+  </div>
+  <div class="blog-grid">
+    <a href="#" class="blog-card featured">
+      <div class="blog-img">
+        <div class="blog-img-pattern"></div>
+        <span class="blog-img-label">[FEATURED POST]</span>
+      </div>
+      <div class="blog-content">
+        <div class="blog-meta">
+          <span class="blog-cat">Bug Bounty</span>
+          <span class="blog-date">May 2025</span>
+        </div>
+        <div class="blog-title">How I Found a Critical IDOR in a $10B Fintech Platform and Earned $8,000</div>
+        <p class="blog-excerpt">A deep-dive into an Insecure Direct Object Reference vulnerability that exposed millions of user financial records — from initial recon to full disclosure.</p>
+        <span class="read-more">Read writeup</span>
+      </div>
+    </a>
+    <a href="#" class="blog-card">
+      <div class="blog-img" style="height:140px">
+        <div class="blog-img-pattern"></div>
+        <span class="blog-img-label">[TECHNIQUE]</span>
+      </div>
+      <div class="blog-content">
+        <div class="blog-meta">
+          <span class="blog-cat">Web Security</span>
+          <span class="blog-date">Apr 2025</span>
+        </div>
+        <div class="blog-title">Chaining XSS + CSRF to Account Takeover</div>
+        <p class="blog-excerpt">Walk through of a multi-step exploit chain that turned a reflected XSS into full account compromise.</p>
+        <span class="read-more">Read more</span>
+      </div>
+    </a>
+    <a href="#" class="blog-card">
+      <div class="blog-img" style="height:140px">
+        <div class="blog-img-pattern"></div>
+        <span class="blog-img-label">[RESEARCH]</span>
+      </div>
+      <div class="blog-content">
+        <div class="blog-meta">
+          <span class="blog-cat">OSINT</span>
+          <span class="blog-date">Mar 2025</span>
+        </div>
+        <div class="blog-title">Mapping an Entire Attack Surface with Free Tools</div>
+        <p class="blog-excerpt">My recon methodology: Shodan, Amass, nuclei, and custom scripts to map targets before touching them.</p>
+        <span class="read-more">Read more</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-label">Portfolio</div>
+  <h2 class="section-title">Selected Projects</h2>
+  <p class="section-sub">Tools I've built, research I've published, and CTF challenges I've solved.</p>
+  <div class="projects-grid">
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon">🛡️</div>
+        <div class="project-links">
+          <span class="icon-link" title="GitHub">GH</span>
+          <span class="icon-link" title="Demo">↗</span>
+        </div>
+      </div>
+      <div class="project-name">AutoRecon-KE</div>
+      <p class="project-desc">An automated reconnaissance framework combining passive + active discovery for bug bounty hunting. Wraps Amass, Subfinder, httpx, and Nuclei into a unified pipeline with JSON reporting.</p>
+      <div class="project-techs">
+        <span class="tag tag-green">Python</span>
+        <span class="tag tag-blue">Bash</span>
+        <span class="tag tag-green">Nuclei</span>
+        <span class="tag tag-blue">Shodan API</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon">🔐</div>
+        <div class="project-links">
+          <span class="icon-link" title="GitHub">GH</span>
+          <span class="icon-link" title="Blog">↗</span>
+        </div>
+      </div>
+      <div class="project-name">JWT Exploitation Toolkit</div>
+      <p class="project-desc">Python toolkit for testing JWT implementation vulnerabilities: none algorithm attacks, algorithm confusion, weak secret brute-forcing, and kid header injection.</p>
+      <div class="project-techs">
+        <span class="tag tag-green">Python</span>
+        <span class="tag tag-red">JWT</span>
+        <span class="tag tag-blue">Auth Testing</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon">🏴</div>
+        <div class="project-links">
+          <span class="icon-link" title="Writeup">↗</span>
+        </div>
+      </div>
+      <div class="project-name">HackTheBox — Pro Hacker Rank</div>
+      <p class="project-desc">Solved 60+ machines on HackTheBox including Active Directory environments, binary exploitation challenges, and complex web app boxes. Published 15+ detailed writeups.</p>
+      <div class="project-techs">
+        <span class="tag tag-red">HTB</span>
+        <span class="tag tag-green">Active Directory</span>
+        <span class="tag tag-blue">Linux Privesc</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon">🌍</div>
+        <div class="project-links">
+          <span class="icon-link" title="Slides">↗</span>
+        </div>
+      </div>
+      <div class="project-name">AfricaHack Community</div>
+      <p class="project-desc">Co-founded a cybersecurity community for East African hackers. Organize monthly CTF events, vulnerability disclosure workshops, and mentorship for university students.</p>
+      <div class="project-techs">
+        <span class="tag tag-green">Community</span>
+        <span class="tag tag-blue">CTF</span>
+        <span class="tag tag-red">Education</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CERTS & EDUCATION -->
+<section id="certs">
+  <div class="section-label">Qualifications</div>
+  <h2 class="section-title">Certs & Education</h2>
+  <div class="certs-layout">
+    <div>
+      <h3 style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:2rem">// Education</h3>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-year">2021 — Present</div>
+          <div class="tl-title">BSc. Computer Science</div>
+          <div class="tl-sub">University of Nairobi, Kenya</div>
+          <div class="tl-desc">Specializing in Networks & Information Security. Final year project on automated vulnerability detection using ML.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-year">2020</div>
+          <div class="tl-title">Kenya Certificate of Secondary Education</div>
+          <div class="tl-sub">Alliance High School, Kikuyu</div>
+          <div class="tl-desc">Grade A. Maths, Physics, Computer Studies focus. Graduated with distinction.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:2rem">// Certifications</h3>
+      <div class="certs-list">
+        <div class="cert-item">
+          <div class="cert-badge">🏅</div>
+          <div class="cert-body">
+            <div class="cert-name">eJPT — eLearnSecurity Junior Penetration Tester</div>
+            <div class="cert-org">eLearnSecurity / INE Security</div>
+          </div>
+          <span class="cert-status cert-earned">Earned</span>
+        </div>
+        <div class="cert-item">
+          <div class="cert-badge">🛡️</div>
+          <div class="cert-body">
+            <div class="cert-name">CEH — Certified Ethical Hacker</div>
+            <div class="cert-org">EC-Council</div>
+          </div>
+          <span class="cert-status cert-earned">Earned</span>
+        </div>
+        <div class="cert-item">
+          <div class="cert-badge">🔒</div>
+          <div class="cert-body">
+            <div class="cert-name">CompTIA Security+</div>
+            <div class="cert-org">CompTIA</div>
+          </div>
+          <span class="cert-status cert-earned">Earned</span>
+        </div>
+        <div class="cert-item">
+          <div class="cert-badge">⚡</div>
+          <div class="cert-body">
+            <div class="cert-name">OSCP — Offensive Security Certified Professional</div>
+            <div class="cert-org">Offensive Security</div>
+          </div>
+          <span class="cert-status cert-pursuit">In Pursuit</span>
+        </div>
+        <div class="cert-item">
+          <div class="cert-badge">🌐</div>
+          <div class="cert-body">
+            <div class="cert-name">BSCP — Burp Suite Certified Practitioner</div>
+            <div class="cert-org">PortSwigger</div>
+          </div>
+          <span class="cert-status cert-pursuit">In Pursuit</span>
+        </div>
+        <div class="cert-item">
+          <div class="cert-badge">🏆</div>
+          <div class="cert-body">
+            <div class="cert-name">HackerOne Top 200 Hackers — 2024</div>
+            <div class="cert-org">HackerOne Platform</div>
+          </div>
+          <span class="cert-status cert-earned">Earned</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MEDIA & UPLOADS -->
+<section id="media">
+  <div class="section-label">Content & Files</div>
+  <h2 class="section-title">Media & Documents</h2>
+  <p class="section-sub">Upload and share your reports, CVs, POC videos, audio walkthroughs, and research documents.</p>
+  <div class="media-layout">
+    <div>
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Drop Files Here</div>
+        <p class="upload-sub">Or click to browse from your device</p>
+        <div class="upload-types">
+          <span class="tag tag-green">PDF</span>
+          <span class="tag tag-blue">Video</span>
+          <span class="tag tag-green">Audio</span>
+          <span class="tag tag-red">Images</span>
+          <span class="tag tag-blue">Docs</span>
+          <span class="tag tag-green">Archives</span>
+        </div>
+        <button class="btn-primary" onclick="event.stopPropagation(); document.getElementById('file-input').click()">Choose Files</button>
+      </div>
+      <input type="file" id="file-input" multiple accept="*/*">
+      <div class="files-list" id="files-list"></div>
+    </div>
+    <div class="media-tools">
+      <div class="media-tool">
+        <div class="mt-icon">📄</div>
+        <div class="mt-body">
+          <div class="mt-title">Research Papers & Reports</div>
+          <div class="mt-sub">Upload your pentest reports, whitepapers, CVE disclosures</div>
+        </div>
+        <span class="mt-arrow">→</span>
+      </div>
+      <div class="media-tool">
+        <div class="mt-icon">🎥</div>
+        <div class="mt-body">
+          <div class="mt-title">Proof of Concept Videos</div>
+          <div class="mt-sub">Upload PoC walkthroughs, bug demos, and screen recordings</div>
+        </div>
+        <span class="mt-arrow">→</span>
+      </div>
+      <div class="media-tool">
+        <div class="mt-icon">🎙️</div>
+        <div class="mt-body">
+          <div class="mt-title">Podcast & Audio</div>
+          <div class="mt-sub">Security podcast episodes, audio interviews, talks</div>
+        </div>
+        <span class="mt-arrow">→</span>
+      </div>
+      <div class="media-tool">
+        <div class="mt-icon">🖼️</div>
+        <div class="mt-body">
+          <div class="mt-title">Screenshots & Visuals</div>
+          <div class="mt-sub">Bug screenshots, diagrams, tool outputs, infographics</div>
+        </div>
+        <span class="mt-arrow">→</span>
+      </div>
+      <div class="media-tool">
+        <div class="mt-icon">📜</div>
+        <div class="mt-body">
+          <div class="mt-title">CV & Certifications</div>
+          <div class="mt-sub">Upload your resume, cert badges, Hall of Fame letters</div>
+        </div>
+        <span class="mt-arrow">→</span>
+      </div>
+      <div class="media-tool">
+        <div class="mt-icon">🗜️</div>
+        <div class="mt-body">
+          <div class="mt-title">Tools & Scripts</div>
+          <div class="mt-sub">Custom scripts, compiled tools, exploit code archives</div>
+        </div>
+        <span class="mt-arrow">→</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- NEWSLETTER -->
+<section id="newsletter">
+  <div class="newsletter-inner">
+    <div>
+      <div class="section-label">Newsletter</div>
+      <h2 class="section-title">Stay in the Loop</h2>
+      <p style="color:var(--text2);font-size:0.95rem;max-width:400px">Get exclusive security research, bug bounty tips, writeups, and behind-the-scenes updates delivered to your inbox.</p>
+      <div class="nl-benefits">
+        <div class="nl-benefit"><span class="nl-benefit-icon">🔥</span> Exclusive vulnerability writeups before they go public</div>
+        <div class="nl-benefit"><span class="nl-benefit-icon">💡</span> Bug bounty hunting tips and methodology guides</div>
+        <div class="nl-benefit"><span class="nl-benefit-icon">🛠️</span> New tools, scripts, and recon techniques</div>
+        <div class="nl-benefit"><span class="nl-benefit-icon">🌍</span> African cybersecurity news and opportunities</div>
+      </div>
+    </div>
+    <div>
+      <!-- WEB3FORMS: Replace YOUR_WEB3FORMS_KEY with key from https://web3forms.com (free) -->
+      <form id="nl-form" class="nl-form" onsubmit="handleSubscribe(event)">
+        <input type="hidden" name="access_key" value="ea1085a9-4544-4b38-aef7-8c6cb1a0a868">
+        <input type="hidden" name="subject" value="New Newsletter Subscriber — Kennedy Maingi Portfolio">
+        <input type="hidden" name="redirect" value="false">
+        <input type="hidden" id="nl-topics" name="topics" value="">
+        <div class="nl-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" name="name" class="form-input" placeholder="Your name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" name="email" class="form-input" placeholder="you@example.com" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Topics You're Into</label>
+          <div class="nl-cats">
+            <span class="nl-cat active" onclick="toggleCat(this)">Bug Bounty</span>
+            <span class="nl-cat active" onclick="toggleCat(this)">Web AppSec</span>
+            <span class="nl-cat" onclick="toggleCat(this)">Network Pen Test</span>
+            <span class="nl-cat" onclick="toggleCat(this)">CTF Writeups</span>
+            <span class="nl-cat" onclick="toggleCat(this)">Tools & Scripts</span>
+            <span class="nl-cat" onclick="toggleCat(this)">Career Advice</span>
+            <span class="nl-cat" onclick="toggleCat(this)">African InfoSec</span>
+          </div>
+        </div>
+        <button type="submit" class="nl-submit" id="nl-btn">Subscribe — It's Free 🔒</button>
+        <p class="nl-note">No spam. Unsubscribe anytime. ~2 emails/month.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-label">Get in touch</div>
+  <h2 class="section-title">Let's Work Together</h2>
+  <p class="section-sub">Have a target that needs testing? A vulnerability to report? Or just want to connect? I'm open to freelance engagements, collaborations, and speaking opportunities.</p>
+  <div class="contact-grid">
+    <div class="contact-info">
+      <div class="contact-item">
+        <div class="ci-icon">📍</div>
+        <div>
+          <div class="ci-label">Location</div>
+          <div class="ci-val">Nairobi, Kenya 🇰🇪</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="ci-icon">📧</div>
+        <div>
+          <div class="ci-label">Email</div>
+          <div class="ci-val">kennedy@maingisec.com</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="ci-icon">⏰</div>
+        <div>
+          <div class="ci-label">Response Time</div>
+          <div class="ci-val">Within 24 hours</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="ci-icon">💼</div>
+        <div>
+          <div class="ci-label">Availability</div>
+          <div class="ci-val">Open to freelance engagements</div>
+        </div>
+      </div>
+      <div>
+        <div class="ci-label" style="margin-bottom:12px">Find me on</div>
+        <div class="social-row">
+          <span class="social-btn">🐦 Twitter/X</span>
+          <span class="social-btn">💼 LinkedIn</span>
+          <span class="social-btn">🐙 GitHub</span>
+          <span class="social-btn">🏴 HTB</span>
+          <span class="social-btn">🐛 HackerOne</span>
+        </div>
+      </div>
+    </div>
+    <!-- FORMSPREE: Replace YOUR_FORMSPREE_ID with your form ID from https://formspree.io (free) -->
+    <form id="contact-form" class="contact-form" onsubmit="handleContact(event)">
+      <div class="cf-row">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input type="text" name="name" class="form-input" placeholder="John Smith" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-input" placeholder="john@company.com" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <input type="text" name="subject" class="form-input" placeholder="Penetration Testing Engagement / Collaboration / ...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message</label>
+        <textarea name="message" class="form-input" placeholder="Tell me about your project, scope, timeline, and budget..." required></textarea>
+      </div>
+      <button type="submit" class="cf-submit" id="cf-btn">Send Message →</button>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <strong>Kennedy Maingi</strong> — Penetration Tester & Bug Bounty Hunter<br>
+    © <span id="footer-year">2025</span> · Nairobi, Kenya 🇰🇪
+  </div>
+  <div class="footer-right" id="footer-age"></div>
+</footer>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  // ── AUTO AGE CALCULATION ──
+  function calcAge() {
+    const dob = new Date(2002, 11, 12); // Dec 12 2002
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age;
+  }
+  const age = calcAge();
+  document.getElementById('age-display').textContent = age;
+  document.getElementById('card-age').textContent = age + ' yrs';
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+  // Birthday countdown
+  function birthdayCountdown() {
+    const today = new Date();
+    const nextBd = new Date(today.getFullYear(), 11, 12);
+    if (today > nextBd) nextBd.setFullYear(nextBd.getFullYear() + 1);
+    const days = Math.ceil((nextBd - today) / (1000*60*60*24));
+    document.getElementById('footer-age').textContent = days === 0 ? '🎂 Birthday today!' : `Birthday in ${days} days`;
+  }
+  birthdayCountdown();
+
+  // ── TYPED ROLE ANIMATION ──
+  const roles = ['Penetration Tester', 'Bug Bounty Hunter', 'Red Team Operator', 'Security Researcher', 'CTF Player', 'Vulnerability Analyst'];
+  let ri = 0, ci = 0, deleting = false;
+  const el = document.getElementById('typed-role');
+  function type() {
+    const word = roles[ri];
+    if (!deleting) {
+      el.textContent = word.slice(0, ++ci);
+      if (ci === word.length) { deleting = true; setTimeout(type, 2000); return; }
+    } else {
+      el.textContent = word.slice(0, --ci);
+      if (ci === 0) { deleting = false; ri = (ri + 1) % roles.length; }
+    }
+    setTimeout(type, deleting ? 60 : 100);
+  }
+  type();
+
+  // ── FILE UPLOAD ──
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const filesList = document.getElementById('files-list');
+  let uploadedFiles = [];
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/(1024*1024)).toFixed(1) + ' MB';
+  }
+  function fileEmoji(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    if (['pdf'].includes(ext)) return '📄';
+    if (['mp4','mov','avi','mkv','webm'].includes(ext)) return '🎥';
+    if (['mp3','wav','ogg','m4a'].includes(ext)) return '🎙️';
+    if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return '🖼️';
+    if (['zip','rar','tar','gz','7z'].includes(ext)) return '🗜️';
+    if (['doc','docx','txt','md'].includes(ext)) return '📝';
+    if (['py','js','sh','rb','go','rs'].includes(ext)) return '⚙️';
+    return '📁';
+  }
+  function renderFiles() {
+    filesList.innerHTML = uploadedFiles.map((f, i) => `
+      <div class="file-item">
+        <span class="file-icon">${fileEmoji(f.name)}</span>
+        <span class="file-name">${f.name}</span>
+        <span class="file-size">${formatSize(f.size)}</span>
+        <span class="file-del" onclick="removeFile(${i})">✕</span>
+      </div>
+    `).join('');
+  }
+  function removeFile(i) { uploadedFiles.splice(i,1); renderFiles(); }
+  fileInput.addEventListener('change', e => {
+    uploadedFiles.push(...Array.from(e.target.files));
+    renderFiles();
+    showToast(`✅ ${e.target.files.length} file(s) added`);
+    fileInput.value = '';
+  });
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    uploadedFiles.push(...Array.from(e.dataTransfer.files));
+    renderFiles();
+    showToast(`✅ ${e.dataTransfer.files.length} file(s) added`);
+  });
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── NEWSLETTER TOPIC TOGGLE ──
+  function toggleCat(el) { el.classList.toggle('active'); updateTopics(); }
+  function updateTopics() {
+    const active = [...document.querySelectorAll('.nl-cat.active')].map(e => e.textContent).join(', ');
+    const inp = document.getElementById('nl-topics');
+    if (inp) inp.value = active;
+  }
+  updateTopics();
+
+  // ── NEWSLETTER FORM (Web3Forms) ──
+  async function handleSubscribe(e) {
+    e.preventDefault();
+    updateTopics();
+    const btn = document.getElementById('nl-btn');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    const form = document.getElementById('nl-form');
+    const data = Object.fromEntries(new FormData(form));
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('🔒 Subscribed! Welcome to the list.');
+        form.reset(); updateTopics();
+      } else { showToast('❌ Error. Check your Web3Forms key.'); }
+    } catch { showToast('❌ Network error. Try again.'); }
+    btn.textContent = 'Subscribe — It\'s Free 🔒';
+    btn.disabled = false;
+  }
+
+  // ── CONTACT FORM (Formspree) ──
+  async function handleContact(e) {
+    e.preventDefault();
+    const btn = document.getElementById('cf-btn');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    const form = document.getElementById('contact-form');
+    // ⚠️ Replace YOUR_FORMSPREE_ID below with your actual Formspree form ID
+    try {
+      const res = await fetch('https://formspree.io/f/xykvqlkn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(new FormData(form)))
+      });
+      const json = await res.json();
+      if (res.ok) {
+        showToast('📨 Message sent! I\'ll reply within 24h.');
+        form.reset();
+      } else { showToast('❌ Error: ' + (json.error || 'Try again.')); }
+    } catch { showToast('❌ Network error. Try again.'); }
+    btn.textContent = 'Send Message →';
+    btn.disabled = false;
+  }
+
+  // ── SCROLL ANIMATIONS ──
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'none';
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.service-card, .blog-card, .project-card, .cert-item, .tl-item').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
